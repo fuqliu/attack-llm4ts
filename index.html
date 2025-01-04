@@ -158,13 +158,21 @@
             The attacker's objective is to deceive an LLM-based time series forecasting model into producing anomalous outputs that deviate significantly from both its normal predictions and the corresponding ground truth, through the introduction of imperceptible perturbations. This adversarial attack problem can be framed as an optimization task as follows:
             \[
               \begin{split}
-                \max_{\rho_{t-T+1:t}}~& \mathcal{L}\left(f\left(\mathbf{X}_{t-T+1:t}+\bm{\rho}_{t-T+1:t} \right), \mathbf{Y}_{t+1:t+\tau}\right)\\
-                \text{s.t.}~&\ \left\|\rho_i \right\|_p \le\epsilon, i\in\left[t-T+1,t\right]
+                \max_{\rho_{t-T+1:t}}~& \mathcal{L}\left(f\left(\mathbf{X}_{t-T+1:t}+\boldsymbol{\rho}_{t-T+1:t} \right), \mathbf{Y}_{t+1:t+\tau}\right)\\
+                \text{s.t.}~&\ \left\|\rho_i \right\|_p \le\epsilon, i\in\left[t-T+1,t\right],
               \end{split}
             \]
-            where \( \mathbf{X}_{t-T+1:t} \) denotes the clean input, \( \mathbf{Y}_{t+1:t+\tau} \) denotes the true future values, and \( \bm{\rho}_{t-T+1:t} \) denotes the adversarial perturbations. The loss function \( \mathcal{L} \) quantifies the discrepancy between the model's output and the ground truth, while \( \epsilon \) constrains the magnitude of the perturbations under the \( \ell_p \)-norm, ensuring that the adversarial attack remains imperceptible.
+            where \( \mathbf{X}_{t-T+1:t} \) denotes the clean input, \( \mathbf{Y}_{t+1:t+\tau} \) denotes the true future values, and \( \boldsymbol{\rho}_{t-T+1:t} \) denotes the adversarial perturbations. The loss function \( \mathcal{L} \) quantifies the discrepancy between the model's output and the ground truth, while \( \epsilon \) constrains the magnitude of the perturbations under the \( \ell_p \)-norm, ensuring that the adversarial attack remains imperceptible.
           </p>
-
+          <p>
+            In practical applications, accessing the full set of detailed parameters of an LLM is typically infeasible, compelling the attacker to treat the target model as a black-box system. Moreover, the ground truth is unavailable during the runtime of forecasting. Additionally, obtaining the complete training dataset is impractical, leaving the attacker without access to this information. The attacker’s capabilities can therefore be summarized as follows:
+          </p>
+          <ul>
+            <li><strong>no access to the training data</strong></li>
+            <li><strong>no access to internal information of the LLM-based forecasting model</strong></li>
+            <li><strong>no access to ground truth</strong></li>
+            <li><strong>the ability to query the target model</strong></li>
+          </ul>
         </div>
       </div>
     </div>
