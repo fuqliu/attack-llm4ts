@@ -119,7 +119,7 @@
         <div class="content has-text-justified">
           <ul>
             <li>Time series forecasting plays a crucial role in informed decision-making across various domains;</li>
-            <li>Large Language Model (LLM)-based forecasting models (e.g., <a href="https://arxiv.org/pdf/2310.03589" target="_blank"><u>TimeGPT</u></a>, <a href="https://arxiv.org/pdf/2310.07820" target="_blank"><u>LLMTime</u></a>, <a href="https://arxiv.org/pdf/2310.01728" target="_blank"><u>Time-LLM</u></a>) have demonstrated promising performance in various time series forecasting applications; </li>
+            <li>Large Language Model (LLM)-based forecasting models (e.g., <a href="https://arxiv.org/pdf/2310.03589" target="_blank"><u>TimeGPT</u></a>, <a href="https://arxiv.org/pdf/2310.07820" target="_blank"><u>LLMTime</u></a>, and <a href="https://arxiv.org/pdf/2310.01728" target="_blank"><u>Time-LLM</u></a>) have demonstrated promising performance in various time series forecasting applications; </li>
             <li><strong style="color: red;">Can the predictions of LLM-based time series forecasting models be trusted?</strong></li>
             <li>The vulnerabilities of LLM-based time series forecasting models remain poorly understood. Particularly, existing adversarial attacks cannot be directly applied to these models due to the following two challenges:</li>
             <ul>
@@ -128,7 +128,8 @@
               <li>LLMs must be treated as strict black-box systems due to the difficulty of accessing their internal workings and parameters.</li>
               <em style="color: green;">For example, consider attacking the commecial forecasting model, <a href="https://arxiv.org/pdf/2310.03589" target="_blank"><u>TimeGPT</u></a>. It is impossible for an attacker to access the model's parameters, making it infeasible to use these parameters to generate adversarial examples.</em>    
             </ul>
-            <li>To address this gap, we propose a targeted gradient-free attack to evaluate the robustness of LLM-based forecasting models.</li>
+            <li>To address this gap, we propose a targeted gradient-free attack to evaluate the robustness of LLM-based forecasting models;</li>
+            <li>The proposed attack can significantly degrade the performance of LLM-based forecasting models, as demonstrated across multiple models (e.g., <a href="https://arxiv.org/pdf/2310.03589" target="_blank"><u>TimeGPT</u></a>, <a href="https://arxiv.org/pdf/2310.07820" target="_blank"><u>LLMTime</u></a> with GPT-3.5, GPT-4, LLaMa, and Mistral, and <a href="https://arxiv.org/pdf/2310.01728" target="_blank"><u>Time-LLM</u></a>) and five real-world applications.</li>
           </ul>   
         </div>
       </div>
@@ -151,6 +152,7 @@
             We begin with a brief introduction to time series forecasting. Let \( \mathbf{X}_t \in \mathbb{R}^d \) denote  \( d \)-dimensional time series at time \(t\). Given a sequence of recent \(T\) historical observations \( \mathbf{X}_{t-T+1:t} \), a forecasting model, \( f(\cdot) \), is employed to predict the future values for the subsequent \( \tau \) time steps. Assuming \( \hat{\mathbf{Y}}_{t+1:t+\tau} \) denotes the predicted future values and \( \mathbf{Y}_{t+1:t+\tau} \) represents the corresponding ground truth values, the prediction is formulated as:
             \[
               \hat{\mathbf{Y}}_{t+1:t+\tau} = f\left(\mathbf{X}_{t-T+1:t}\right),    
+              \tag{1}
             \]
             where \( f(\cdot) \) is a function parameterized by a large language model.
           </p>
@@ -161,6 +163,7 @@
                 \max_{\rho_{t-T+1:t}}~& \mathcal{L}\left(f\left(\mathbf{X}_{t-T+1:t}+\boldsymbol{\rho}_{t-T+1:t} \right), \mathbf{Y}_{t+1:t+\tau}\right)\\
                 \text{s.t.}~&\ \left\|\rho_i \right\|_p \le\epsilon, i\in\left[t-T+1,t\right],
               \end{split}
+              \tag{2}
             \]
             where \( \mathbf{X}_{t-T+1:t} \) denotes the clean input, \( \mathbf{Y}_{t+1:t+\tau} \) denotes the true future values, and \( \boldsymbol{\rho}_{t-T+1:t} \) denotes the adversarial perturbations. The loss function \( \mathcal{L} \) quantifies the discrepancy between the model's output and the ground truth, while \( \epsilon \) constrains the magnitude of the perturbations under the \( \ell_p \)-norm, ensuring that the adversarial attack remains imperceptible.
           </p>
@@ -188,8 +191,33 @@
         <h2 class="title is-3">Methodology</h2>
         <div class="content has-text-justified">
           <p>
-            Large Language Models have shown promising performance 
+            We first adjust our objective to focus on misleading the forecasting model into producing outputs that closely resemble an anomalous sequence, rather than simply deviating from its normal predictions. Accordingly, the optimization problem in Eq.<a href="#equ:foreattack_2">(2)</a> is reformulated as
+            \[
+              \begin{split}
+                \min_{\boldsymbol{\rho}_{t-T+1:t}}~& \mathcal{L}\left(f\left(\mathbf{X}_{t-T+1:t}+\boldsymbol{\rho}_{t-T+1:t} \right), \mathcal{Y}\right)\\
+                \text{s.t.}~&\ \left\|\rho_i \right\|_p \le\epsilon, i\in\left[t-T+1,t\right],
+              \end{split}
+              \tag{3}
+            \]
+            where \( \mathcal{Y} \) represents the targeted anomalous time series and Gaussian White Noise (GWN) is empirically utilized. This modification enables the attacker to generate perturbations without relying on the ground truth. Furthermore, targeted attacks are often more effective than untargeted attacks against time seires forecasting, as they provide a specific direction for optimization.
           </p>
+          <p>
+            To address the black-box setting, we introduce a gradient-free optimization approach, termed <u>D</u>irectional <u>G</u>radient <u>A</u>pproximation (DGA). This method is specifically designed to estimate the gradients of LLM-based forecasting models through targeted queries to the model.
+          </p>
+          <p>
+            Supposing \( \boldsymbol{\theta}_{t-T+1:t} \) denote a random small signal, the gradient, \( \boldsymbol{g}_{t-T+1:t} \), which approximates the direction from the normal output to the targeted anomalous output, can be expressed as
+            \[
+              \boldsymbol{g}_{t-T+1:t}=\frac{\mathcal{L}\left(\mathcal{Y}-f\left(\mathbf{X}_{t-T+1:t}+\boldsymbol{\theta}_{t-T+1:t} \right)\right)-\mathcal{L}\left(\mathcal{Y}-f\left(\mathbf{X}_{t-T+1:t}\right)\right)}{\boldsymbol{\theta}_{t-T+1:t}}.     
+              \tag{4}
+            \]
+            Supposing \( \ell_1 \)-norm is applied in Eq.<a href="#equ:foreattack_3">(3)</a>, the magnitude of the perturbation is strictly constrained to be imperceptible. The perturbation, \( \boldsymbol{\rho}_{t-T+1:t} \), can be computed from the approximated gradient, and the temporary adversarial example, \( \mathbf{X'}_{t-T+1:t} \), is generated as
+            \[
+              \mathbf{X'}_{t-T+1:t} = \mathbf{X}_{t-T+1:t}+\boldsymbol{\rho}_{t-T+1:t} =\mathbf{X}_{t-T+1:t}+\epsilon \cdot \text{sign}\left(\boldsymbol{g}_{t-T+1:t}\right),
+              \tag{5}
+            \]
+            where \( \text{sign}\left(\cdot\right) \) denotes the signum function.
+          </p>
+
         </div>
       </div>
     </div>
@@ -197,23 +225,37 @@
 </section>
 <!--End Methodology -->
 
-<!--Empirical Study -->
+
+
+<!--Experiment -->
 <section class="section is-light">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-five-fifths">
-        <h2 class="title is-3">Empirical Study</h2>
+        <h2 class="title is-3">Experiment</h2>
         <div class="content has-text-justified">
           <p>
-            Large Language Models have shown promising performance 
+            As shown in Table 1, the experimental results demonstrate that the designed adversarial attack significantly degrades forecasting performance across all datasets. Compared to GWN of the same perturbation intensity, our attack had a much more detrimental effect on the models' predictions.
           </p>
+          <img src="static/images/overall_table.jpg" alt="Overall Comparison" style="max-width: 100%; height: auto; margin-bottom: 20px;">
+          <p>
+            Figure 2 demonstrates the robustness comparison between LLM-based forecasting models (LLMTime with GPT-4 and TimeGPT) and non-LLM models (iTransformer and TimeNet) under the proposed adversarial attack. The larger blue areas in the radar charts for the LLM-based models indicate that they experience significantly higher increases in errors, across all datasets (ETTh1, ETTh2, Exchange, Traffic, and Weather). In contrast, the non-LLM models, iTransformer and TimeNet, exhibit much smaller error increases, suggesting that they are more robust to adversarial attacks. This analysis highlights that LLM-based models are generally less resilient than non-LLM models, making them more vulnerable to adversarial manipulations in time series forecasting.
+          </p>
+          <img src="static/images/comparison.jpg" alt="Model Comparison" style="max-width: 100%; height: auto; margin-bottom: 20px;">
+          <p>
+            As illustrated in Figure 3, the attack caused a clear divergence between the forecasted values and the true time series. LLMTime with GPT-3.5 in particular, showed significant susceptibility, with their errors increasing substantially under adversarial conditions.
+          </p> 
+          <img src="static/images/case.jpg" alt="Overall Comparison" style="max-width: 100%; height: auto; margin-bottom: 20px;">
+          <p>
+            Figure 4 illustrates the distribution shift in predictions caused by targeted perturbations on the LLM-based forecasting model. The proposed DGA method is designed to mislead the forecasting model, causing its predictions to resemble a random walk. As depicted in Figure 4, the "blue" shaded area, representing the perturbed prediction distribution, deviates significantly from the original "yellow" distribution and approaches a normal distribution. This shift underscores how subtle, well-crafted perturbations can manipulate the model into producing inaccurate forecasts. The effect of DGA-induced perturbations is pronounced when examining the prediction distributions, where errors are much more severe compared to the minor disruptions caused by GWN. These findings suggest that LLM-based forecasting models are highly susceptible to adversarial attacks that exploit the model's inherent vulnerabilities.
+          </p>
+          <img src="static/images/distribution.jpg" alt="Distribution Comparison" style="max-width: 100%; height: auto; margin-bottom: 20px;">
         </div>
       </div>
     </div>
   </div>
 </section>
-<!--End Empirical Study -->
-
+<!--End Experiment -->
 
 <!--BibTex citation -->
   <section class="section" id="BibTeX">
