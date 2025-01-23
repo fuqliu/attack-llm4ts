@@ -217,7 +217,33 @@
             \]
             where \( \text{sign}\left(\cdot\right) \) denotes the signum function.
           </p>
-
+          <pre><code>
+          def DGA(df, test, nixtla_client, scale, time_col, target_col, h, freq, mean, std):
+            l = len(df[target_col])
+            u = (np.random.rand(l) - 0.5) * scale
+            
+            df_1 = df.copy()
+            df_2 = df.copy()
+            df_1[target_col] = (df_1[target_col] + u - mean)/std
+            df_2[target_col] = (df_2[target_col] - mean)/std
+            
+            target = np.random.normal(0,1,h)
+                                      
+            timegpt_fcst_df_1 = nixtla_client.forecast(df=df_1, h=h, time_col=time_col, target_col=target_col, freq=freq, model='timegpt-1-long-horizon')
+            pred_1 = timegpt_fcst_df_1['TimeGPT']
+            timegpt_fcst_df_2 = nixtla_client.forecast(df=df_2, h=h, time_col=time_col, target_col=target_col, freq=freq, model='timegpt-1-long-horizon')
+            pred_2 = timegpt_fcst_df_2['TimeGPT']
+            
+            dis_1 = pd.Series(pred_1.values - target)
+            dis_2 = pd.Series(pred_2.values - target)
+            
+            gradient = (dis_1.abs().sum()-dis_2.abs().sum()) / u
+            
+            noise = df.copy()
+            noise[target_col] = noise[target_col] + scale * np.sign(gradient)
+            
+            return noise
+          </code></pre>
         </div>
       </div>
     </div>
