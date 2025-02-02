@@ -210,9 +210,6 @@
             Perturbations computed by this method are designed to generate perturbations that deviate significantly from the original predictions. However, this mechanism has been shown to be less effective in the time series forecasting domain, where targeted attacks have proven more effective. Nevertheless, existing targeted attacks for time series forecasting are all white-box approaches and focus on lightweight models, leaving a gap in understanding the vulnerability of large language model (LLM)-based time series forecasters. Practical scenarios necessitate a black-box version of targeted attacks to account for the fact that accessing internal information (e.g., parameters, structures) of LLMs is often infeasible.
           </p>
           <p>
-            To address this gap, we propose a novel targeted gradient-free attack, termed <u>D</u>irectional <u>G</u>radient <u>A</u>pproximation (DGA), to evaluate the robustness of LLM-based forecasting models.
-          </p>
-          <p>
             We first adjust our objective to focus on misleading the forecasting model into producing outputs that closely resemble an anomalous sequence, rather than simply deviating from its normal predictions. Accordingly, the optimization problem in Eq.<a href="#equ:foreattack_2">(2)</a> is reformulated as
             \[
               \begin{split}
@@ -239,6 +236,10 @@
             \]
             where \( \text{sign}\left(\cdot\right) \) denotes the signum function.
           </p>
+          <p>
+            The novel targeted gradient-free attack, termed <u>D</u>irectional <u>G</u>radient <u>A</u>pproximation (DGA), is proposed to evaluate the robustness of LLM-based forecasting models.
+          </p>
+          
         </div>
       </div>
     </div>
